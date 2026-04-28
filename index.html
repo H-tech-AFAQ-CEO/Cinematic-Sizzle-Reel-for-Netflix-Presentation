@@ -1,0 +1,700 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2084: American Apocalypse — Sizzle Reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--c-black:#000;
+--c-deep:#050810;
+--c-dark:#0a0f1a;
+--c-blood:#8b1a1a;
+--c-ember:#c0392b;
+--c-fire:#e74c3c;
+--c-gold:#c9a84c;
+--c-pale:#e8dcc8;
+--c-ghost:rgba(232,220,200,0.08);
+--c-scan:rgba(0,200,255,0.15);
+--ff-title:'Bebas Neue',sans-serif;
+--ff-body:'Crimson Pro',serif;
+--ff-mono:'Share Tech Mono',monospace;
+}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+background:var(--c-black);
+color:var(--c-pale);
+font-family:var(--ff-body);
+overflow-x:hidden;
+cursor:none;
+}
+#cursor{
+position:fixed;width:12px;height:12px;
+border:1px solid var(--c-gold);
+border-radius:50%;pointer-events:none;z-index:9999;
+transform:translate(-50%,-50%);
+transition:width .2s,height .2s,opacity .2s;
+mix-blend-mode:difference;
+}
+#cursor-trail{
+position:fixed;width:40px;height:40px;
+border:1px solid rgba(201,168,76,0.3);
+border-radius:50%;pointer-events:none;z-index:9998;
+transform:translate(-50%,-50%);
+transition:left .12s ease,top .12s ease;
+}
+
+#progress-bar{
+position:fixed;top:0;left:0;height:2px;
+background:linear-gradient(90deg,var(--c-blood),var(--c-gold));
+z-index:1000;transition:width .1s linear;width:0%;
+box-shadow:0 0 8px var(--c-gold);
+}
+#slide-counter{
+position:fixed;bottom:24px;right:32px;
+font-family:var(--ff-mono);font-size:11px;
+color:rgba(201,168,76,0.6);z-index:1000;
+letter-spacing:3px;
+}
+#nav-dots{
+position:fixed;right:20px;top:50%;transform:translateY(-50%);
+display:flex;flex-direction:column;gap:10px;z-index:1000;
+}
+.nav-dot{
+width:6px;height:6px;border-radius:50%;
+background:rgba(201,168,76,0.25);cursor:pointer;
+transition:all .3s;border:none;
+}
+.nav-dot.active{background:var(--c-gold);box-shadow:0 0 8px var(--c-gold);transform:scale(1.4)}
+.nav-dot:hover{background:rgba(201,168,76,0.7)}
+
+#controls{
+position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+display:flex;gap:16px;z-index:1000;
+}
+.ctrl-btn{
+background:rgba(0,0,0,0.7);border:1px solid rgba(201,168,76,0.3);
+color:var(--c-gold);width:44px;height:44px;border-radius:50%;
+font-size:14px;cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+transition:all .3s;backdrop-filter:blur(8px);
+}
+.ctrl-btn:hover{border-color:var(--c-gold);background:rgba(201,168,76,0.1);box-shadow:0 0 16px rgba(201,168,76,0.3)}
+
+#fullscreen-hint{
+position:fixed;top:20px;left:50%;transform:translateX(-50%);
+font-family:var(--ff-mono);font-size:10px;
+color:rgba(201,168,76,0.4);letter-spacing:4px;
+z-index:1000;transition:opacity 1s;
+}
+
+.scene{
+position:relative;width:100vw;height:100vh;
+display:flex;align-items:center;justify-content:center;
+overflow:hidden;flex-shrink:0;
+}
+#reel{
+display:flex;flex-direction:column;
+}
+
+.bg-img{
+position:absolute;inset:0;
+background-size:cover;background-position:center;
+transform:scale(1.08);
+transition:transform 8s ease;
+filter:saturate(0.3) brightness(0.4);
+}
+.scene.active .bg-img{transform:scale(1)}
+
+.vignette{
+position:absolute;inset:0;
+background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,0.85) 100%);
+z-index:1;
+}
+.scanlines{
+position:absolute;inset:0;z-index:2;
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);
+pointer-events:none;
+}
+.noise{
+position:absolute;inset:0;z-index:2;opacity:0.03;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+animation:noiseAnim 0.5s steps(2) infinite;
+}
+@keyframes noiseAnim{0%{transform:translate(0,0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(1px,1px)}}
+
+.content{
+position:relative;z-index:10;
+text-align:center;
+padding:40px;
+max-width:900px;
+}
+
+.text-card{
+font-family:var(--ff-title);
+font-size:clamp(36px,6vw,88px);
+letter-spacing:0.15em;
+line-height:1;
+color:#fff;
+text-shadow:0 0 60px rgba(139,26,26,0.8),0 2px 4px rgba(0,0,0,0.9);
+opacity:0;transform:translateY(30px) skewX(-2deg);
+transition:opacity 0.8s ease,transform 0.8s ease;
+margin-bottom:28px;
+}
+.scene.active .text-card{opacity:1;transform:translateY(0) skewX(0)}
+
+.voiceover{
+font-family:var(--ff-body);
+font-size:clamp(16px,2.2vw,22px);
+font-weight:300;
+font-style:italic;
+color:var(--c-pale);
+line-height:1.7;
+max-width:640px;
+margin:0 auto 24px;
+opacity:0;transform:translateY(20px);
+transition:opacity 0.8s ease 0.4s,transform 0.8s ease 0.4s;
+text-shadow:0 1px 8px rgba(0,0,0,0.9);
+}
+.scene.active .voiceover{opacity:1;transform:translateY(0)}
+
+.time-code{
+font-family:var(--ff-mono);
+font-size:10px;letter-spacing:4px;
+color:rgba(201,168,76,0.5);
+margin-bottom:16px;
+opacity:0;transition:opacity 0.6s ease 0.2s;
+}
+.scene.active .time-code{opacity:1}
+
+.divider{
+width:60px;height:1px;
+background:linear-gradient(90deg,transparent,var(--c-gold),transparent);
+margin:20px auto;
+opacity:0;transform:scaleX(0);
+transition:opacity 0.6s ease 0.6s,transform 0.6s ease 0.6s;
+}
+.scene.active .divider{opacity:1;transform:scaleX(1)}
+
+.icon-badge{
+font-size:clamp(24px,4vw,40px);
+color:var(--c-blood);
+margin-bottom:16px;
+opacity:0;transform:scale(0.5);
+transition:opacity 0.5s ease 0.3s,transform 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s;
+filter:drop-shadow(0 0 12px rgba(139,26,26,0.8));
+}
+.scene.active .icon-badge{opacity:1;transform:scale(1)}
+
+.glitch-text{
+position:relative;
+}
+.glitch-text::before,.glitch-text::after{
+content:attr(data-text);
+position:absolute;top:0;left:0;width:100%;
+}
+.glitch-text::before{
+color:var(--c-blood);
+animation:glitch1 3s infinite;
+clip-path:polygon(0 0,100% 0,100% 40%,0 40%);
+}
+.glitch-text::after{
+color:var(--c-scan);
+animation:glitch2 3s infinite;
+clip-path:polygon(0 60%,100% 60%,100% 100%,0 100%);
+}
+@keyframes glitch1{0%,92%,100%{transform:none;opacity:0}93%{transform:translate(-3px,0);opacity:0.8}95%{transform:translate(3px,0);opacity:0.8}97%{transform:none;opacity:0}}
+@keyframes glitch2{0%,94%,100%{transform:none;opacity:0}95%{transform:translate(3px,0);opacity:0.6}97%{transform:translate(-3px,0);opacity:0.6}99%{transform:none;opacity:0}}
+
+.ember-particle{
+position:absolute;
+width:3px;height:3px;
+border-radius:50%;
+background:var(--c-fire);
+pointer-events:none;
+animation:float-up linear infinite;
+}
+@keyframes float-up{
+0%{transform:translateY(0) translateX(0) scale(1);opacity:1}
+100%{transform:translateY(-120vh) translateX(var(--drift)) scale(0);opacity:0}
+}
+
+.scan-line-anim{
+position:absolute;inset:0;z-index:3;
+background:linear-gradient(180deg,transparent 0%,rgba(0,200,255,0.06) 50%,transparent 100%);
+background-size:100% 200px;
+animation:scan-sweep 3s linear infinite;
+pointer-events:none;
+}
+@keyframes scan-sweep{0%{background-position:0 -200px}100%{background-position:0 100vh}}
+
+.data-overlay{
+position:absolute;top:20px;left:20px;
+font-family:var(--ff-mono);font-size:9px;
+color:rgba(0,200,255,0.3);letter-spacing:2px;
+z-index:5;line-height:1.8;
+opacity:0;transition:opacity 0.5s;
+}
+.scene.active .data-overlay{opacity:1}
+
+.title-scene{background:var(--c-black)}
+.title-scene .content{position:relative;z-index:10}
+
+.main-title{
+font-family:var(--ff-title);
+font-size:clamp(52px,10vw,140px);
+letter-spacing:0.2em;
+line-height:0.9;
+background:linear-gradient(180deg,#fff 0%,var(--c-pale) 40%,var(--c-gold) 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+opacity:0;transform:translateY(50px);
+transition:opacity 1.2s ease,transform 1.2s cubic-bezier(0.16,1,0.3,1);
+filter:drop-shadow(0 0 40px rgba(201,168,76,0.4));
+}
+.scene.active .main-title{opacity:1;transform:translateY(0)}
+
+.sub-title{
+font-family:var(--ff-body);
+font-size:clamp(13px,1.8vw,18px);
+letter-spacing:0.5em;
+color:var(--c-gold);
+font-weight:300;
+opacity:0;transform:translateY(20px);
+transition:opacity 0.8s ease 0.5s,transform 0.8s ease 0.5s;
+margin-top:16px;
+}
+.scene.active .sub-title{opacity:1;transform:translateY(0)}
+
+.author-line{
+font-family:var(--ff-mono);font-size:11px;
+letter-spacing:3px;color:rgba(201,168,76,0.5);
+margin-top:20px;opacity:0;
+transition:opacity 0.8s ease 0.9s;
+}
+.scene.active .author-line{opacity:1}
+
+.netflix-badge{
+display:inline-flex;align-items:center;gap:8px;
+margin-top:28px;
+padding:10px 20px;
+border:1px solid rgba(201,168,76,0.3);
+font-family:var(--ff-mono);font-size:10px;
+letter-spacing:3px;color:rgba(201,168,76,0.7);
+opacity:0;transition:opacity 0.8s ease 1.1s;
+}
+.scene.active .netflix-badge{opacity:1}
+
+.final-scene .content{max-width:1100px}
+.final-line{
+font-family:var(--ff-title);
+font-size:clamp(48px,8vw,120px);
+letter-spacing:0.25em;
+line-height:1;
+color:#fff;
+text-shadow:0 0 80px rgba(139,26,26,0.9);
+opacity:0;transform:scale(0.9);
+transition:opacity 1s ease,transform 1s cubic-bezier(0.16,1,0.3,1);
+}
+.scene.active .final-line{opacity:1;transform:scale(1)}
+.final-sub{
+font-family:var(--ff-body);font-weight:300;
+font-size:clamp(14px,1.5vw,18px);
+letter-spacing:0.4em;color:var(--c-gold);
+margin-top:12px;opacity:0;
+transition:opacity 0.8s ease 0.5s;
+}
+.scene.active .final-sub{opacity:1}
+
+.horizon-line{
+position:absolute;bottom:0;left:0;right:0;height:3px;
+background:linear-gradient(90deg,transparent,var(--c-blood),var(--c-gold),var(--c-blood),transparent);
+opacity:0;transition:opacity 1s ease 0.8s;
+}
+.scene.active .horizon-line{opacity:1}
+
+.eye-symbol{
+font-size:80px;color:rgba(139,26,26,0.3);
+position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+z-index:1;animation:pulse-eye 3s ease-in-out infinite;
+}
+@keyframes pulse-eye{0%,100%{opacity:0.2;transform:translate(-50%,-50%) scale(1)}50%{opacity:0.5;transform:translate(-50%,-50%) scale(1.1)}}
+
+.typewriter{
+overflow:hidden;white-space:nowrap;
+border-right:2px solid var(--c-gold);
+animation:typing 2s steps(30,end) 0.5s both,blink 0.8s step-end infinite;
+}
+@keyframes typing{from{width:0}to{width:100%}}
+@keyframes blink{0%,100%{border-color:var(--c-gold)}50%{border-color:transparent}}
+
+.swipe-hint{
+position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
+font-family:var(--ff-mono);font-size:9px;
+color:rgba(201,168,76,0.4);letter-spacing:4px;
+animation:fade-bounce 2s ease-in-out infinite;
+z-index:10;
+}
+@keyframes fade-bounce{0%,100%{opacity:0.4;transform:translateX(-50%) translateY(0)}50%{opacity:0.8;transform:translateX(-50%) translateY(-5px)}}
+
+.corner-deco{
+position:absolute;z-index:5;
+width:30px;height:30px;
+border-color:rgba(201,168,76,0.3);
+border-style:solid;
+border-width:0;
+}
+.corner-deco.tl{top:20px;left:20px;border-top-width:1px;border-left-width:1px}
+.corner-deco.tr{top:20px;right:20px;border-top-width:1px;border-right-width:1px}
+.corner-deco.bl{bottom:70px;left:20px;border-bottom-width:1px;border-left-width:1px}
+.corner-deco.br{bottom:70px;right:20px;border-bottom-width:1px;border-right-width:1px}
+
+.color-grade{
+position:absolute;inset:0;z-index:3;
+mix-blend-mode:color;
+pointer-events:none;
+}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+@media(max-width:600px){
+.text-card{font-size:32px;letter-spacing:0.08em}
+.voiceover{font-size:15px}
+.main-title{font-size:52px}
+#nav-dots{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+<div id="progress-bar"></div>
+<div id="slide-counter">01 / 11</div>
+<div id="nav-dots"></div>
+<div id="fullscreen-hint">PRESS F FOR FULLSCREEN</div>
+
+<div id="controls">
+  <button class="ctrl-btn" id="btn-prev" title="Previous"><i class="fa fa-chevron-left"></i></button>
+  <button class="ctrl-btn" id="btn-play" title="Auto Play"><i class="fa fa-play"></i></button>
+  <button class="ctrl-btn" id="btn-next" title="Next"><i class="fa fa-chevron-right"></i></button>
+  <button class="ctrl-btn" id="btn-fs" title="Fullscreen"><i class="fa fa-expand"></i></button>
+</div>
+
+<div id="reel">
+
+  <section class="scene title-scene" data-index="0">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=80');filter:saturate(0) brightness(0.25) contrast(1.4)"></div>
+    <div class="vignette"></div>
+    <div class="scan-line-anim"></div>
+    <div class="eye-symbol"><i class="fa fa-eye"></i></div>
+    <div class="corner-deco tl"></div>
+    <div class="corner-deco tr"></div>
+    <div class="corner-deco bl"></div>
+    <div class="corner-deco br"></div>
+    <div class="content">
+      <div class="time-code">00:00 — OPENING SEQUENCE</div>
+      <div class="main-title glitch-text" data-text="2084">2084</div>
+      <div class="main-title glitch-text" data-text="AMERICAN" style="font-size:clamp(28px,5vw,72px);letter-spacing:0.4em">AMERICAN</div>
+      <div class="main-title glitch-text" data-text="APOCALYPSE" style="font-size:clamp(28px,5vw,72px);letter-spacing:0.4em">APOCALYPSE</div>
+      <div class="sub-title">A SERIES BASED ON THE NOVEL BY JAMES KEENA</div>
+      <div class="author-line">2-MINUTE SIZZLE REEL · CONFIDENTIAL PRESENTATION</div>
+      <div class="netflix-badge"><i class="fa fa-film"></i>&nbsp; DEVELOPED FOR STREAMING PRESENTATION</div>
+    </div>
+    <div class="swipe-hint">SCROLL OR PRESS → TO BEGIN</div>
+  </section>
+
+  <section class="scene" data-index="1">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="scan-line-anim"></div>
+    <div class="data-overlay">
+      SYS://SURVEILLANCE.GOV<br>
+      CITIZEN.SCAN_ACTIVE<br>
+      BIOMETRIC.LOCK ████<br>
+      THREAT.LEVEL: NOMINAL
+    </div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge"><i class="fa fa-broadcast-tower"></i></div>
+      <div class="time-code">00:00 — 00:12</div>
+      <div class="text-card">TRUTH WAS CONTROLLED</div>
+      <div class="divider"></div>
+      <div class="voiceover">The world wasn't destroyed in a day. It was managed. Manipulated. Watched.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="2">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="scan-line-anim"></div>
+    <div class="data-overlay">
+      IMPLANT://NEURAL.LINK<br>
+      READ.ACCESS: GRANTED<br>
+      EMOTION.SCAN: ACTIVE<br>
+      PREDICT.INDEX: 99.7%
+    </div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge"><i class="fa fa-microchip"></i></div>
+      <div class="time-code">00:12 — 00:25</div>
+      <div class="text-card">EVERYONE WAS CONNECTED. EVERYONE WAS READ.</div>
+      <div class="divider"></div>
+      <div class="voiceover">They installed chips in the people—not just to track them, but to read them, predict them, and control them.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="3">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge"><i class="fa fa-chess-king"></i></div>
+      <div class="time-code">00:25 — 00:38</div>
+      <div class="text-card">POWER ANSWERED TO SOMETHING ELSE</div>
+      <div class="divider"></div>
+      <div class="voiceover">The Elites took everything, calling it order and fairness. But even they answered to something hidden in the shadows.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="4">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=1920&q=80');filter:saturate(0.4) brightness(0.35) hue-rotate(10deg)"></div>
+    <div class="vignette"></div>
+    <div class="color-grade" style="background:rgba(139,26,26,0.15)"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge" style="color:var(--c-fire)"><i class="fa fa-fire"></i></div>
+      <div class="time-code">00:38 — 00:52</div>
+      <div class="text-card">THEN CAME THE DARKNESS… AND ORDER DIED</div>
+      <div class="divider"></div>
+      <div class="voiceover">Bled of its wealth, the system collapsed. The second civil war ignited. America tore itself apart.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="5">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1587502537147-2ba1e48b9e5d?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge"><i class="fa fa-skull-crossbones"></i></div>
+      <div class="time-code">00:52 — 01:08</div>
+      <div class="text-card">IN THE RUINS, FACTIONS TOOK HOLD</div>
+      <div class="divider"></div>
+      <div class="voiceover">In the ruins, brutal factions rose to claim what was left—Jackals, zealots, scavengers, armies, and warlords.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="6">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge" style="color:var(--c-gold)"><i class="fa fa-campground"></i></div>
+      <div class="time-code">01:08 — 01:24</div>
+      <div class="text-card">THEY FOUND PEACE IN A BROKEN WORLD</div>
+      <div class="divider"></div>
+      <div class="voiceover">Far from the cities, one family found a fragile peace. Then a roaming caravan took them in—people who survived by trading, protecting one another, and refusing to surrender their humanity.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="7">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1920&q=80');filter:saturate(0.4) brightness(0.3)"></div>
+    <div class="vignette"></div>
+    <div class="color-grade" style="background:rgba(139,26,26,0.2)"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge" style="color:var(--c-fire)"><i class="fa fa-child"></i></div>
+      <div class="time-code">01:24 — 01:40</div>
+      <div class="text-card">UNTIL THEIR CHILDREN WERE TAKEN</div>
+      <div class="divider"></div>
+      <div class="voiceover">Then that peace was ripped away.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="8">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge"><i class="fa fa-route"></i></div>
+      <div class="time-code">01:40 — 01:55</div>
+      <div class="text-card" style="font-size:clamp(20px,3.5vw,52px);letter-spacing:0.1em">NOW TWO PARENTS MUST CROSS A FRACTURED LAND</div>
+      <div class="divider"></div>
+      <div class="voiceover">Through factions, betrayal, war, and a truth far larger than they understand.</div>
+    </div>
+  </section>
+
+  <section class="scene" data-index="9">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80')"></div>
+    <div class="vignette"></div>
+    <div class="scan-line-anim"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="icon-badge" style="color:var(--c-gold)"><i class="fa fa-key"></i></div>
+      <div class="time-code">01:55 — 02:00</div>
+      <div class="text-card">WHY THEY WERE TAKEN CHANGES EVERYTHING</div>
+      <div class="divider"></div>
+      <div class="voiceover">Because the children weren't taken by chance. Their abduction is tied to the future of everyone still free.</div>
+    </div>
+  </section>
+
+  <section class="scene final-scene" data-index="10">
+    <div class="noise"></div>
+    <div class="scanlines"></div>
+    <div class="bg-img" style="background-image:url('https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=1920&q=80');filter:saturate(0.2) brightness(0.3)"></div>
+    <div class="vignette" style="background:radial-gradient(ellipse at center,transparent 10%,rgba(0,0,0,0.95) 100%)"></div>
+    <div class="color-grade" style="background:rgba(139,26,26,0.1)"></div>
+    <div class="corner-deco tl"></div><div class="corner-deco tr"></div><div class="corner-deco bl"></div><div class="corner-deco br"></div>
+    <div class="content">
+      <div class="time-code" style="letter-spacing:6px;font-size:12px">FINAL TITLE CARD</div>
+      <div class="final-line">2084</div>
+      <div class="final-line" style="font-size:clamp(22px,4vw,56px);letter-spacing:0.35em;transition-delay:0.2s">AMERICAN APOCALYPSE</div>
+      <div class="divider" style="width:120px;transition-delay:0.5s"></div>
+      <div class="final-sub">A SERIES BASED ON THE NOVEL BY JAMES KEENA</div>
+      <div class="author-line" style="transition:opacity 0.8s ease 1.3s;opacity:0" id="pitch-line">DEVELOPED FOR PRESENTATION TO NETFLIX · © 2024</div>
+    </div>
+    <div class="horizon-line"></div>
+  </section>
+
+</div>
+
+<script>
+const scenes=document.querySelectorAll('.scene');
+const total=scenes.length;
+let current=0,playing=false,timer=null,autoInterval=null;
+const timings=[6000,6000,6500,6500,7000,7000,8000,6000,7000,6000,8000];
+
+const progressBar=document.getElementById('progress-bar');
+const slideCounter=document.getElementById('slide-counter');
+const btnPlay=document.getElementById('btn-play');
+const navDotsEl=document.getElementById('nav-dots');
+const cursor=document.getElementById('cursor');
+const trail=document.getElementById('cursor-trail');
+
+scenes.forEach((_,i)=>{
+  const d=document.createElement('button');
+  d.className='nav-dot';d.dataset.i=i;
+  d.addEventListener('click',()=>goTo(i));
+  navDotsEl.appendChild(d);
+});
+const dots=document.querySelectorAll('.nav-dot');
+
+function goTo(n){
+  scenes[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  current=Math.max(0,Math.min(n,total-1));
+  scenes[current].classList.add('active');
+  dots[current].classList.add('active');
+  progressBar.style.width=((current/(total-1))*100)+'%';
+  slideCounter.textContent=(String(current+1).padStart(2,'0'))+' / '+(String(total).padStart(2,'0'));
+  if(current===10){
+    setTimeout(()=>{
+      const pl=document.getElementById('pitch-line');
+      if(pl)pl.style.opacity='1';
+    },1300);
+  }
+  if(playing)resetAuto();
+}
+
+function next(){if(current<total-1)goTo(current+1)}
+function prev(){if(current>0)goTo(current-1)}
+
+function resetAuto(){
+  clearTimeout(timer);
+  timer=setTimeout(()=>{if(playing){if(current<total-1)goTo(current+1);else{playing=false;btnPlay.innerHTML='<i class="fa fa-play"></i>';return;}resetAuto();}},timings[current]||7000);
+}
+
+function togglePlay(){
+  playing=!playing;
+  btnPlay.innerHTML=playing?'<i class="fa fa-pause"></i>':'<i class="fa fa-play"></i>';
+  if(playing)resetAuto();else clearTimeout(timer);
+}
+
+document.getElementById('btn-next').addEventListener('click',next);
+document.getElementById('btn-prev').addEventListener('click',prev);
+btnPlay.addEventListener('click',togglePlay);
+document.getElementById('btn-fs').addEventListener('click',()=>{
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')next();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prev();
+  if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  if(e.key==='p'||e.key==='P')togglePlay();
+  e.preventDefault && e.key===' ' && e.preventDefault();
+});
+
+let startX=0;
+document.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-startX;
+  if(Math.abs(dx)>50){if(dx<0)next();else prev();}
+},{passive:true});
+
+document.addEventListener('wheel',e=>{
+  if(e.deltaY>30)next();
+  else if(e.deltaY<-30)prev();
+},{passive:true});
+
+document.addEventListener('mousemove',e=>{
+  cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';
+  setTimeout(()=>{trail.style.left=e.clientX+'px';trail.style.top=e.clientY+'px';},80);
+});
+
+function spawnEmbers(){
+  const scene=scenes[current];
+  const idx=Number(scene.dataset.index);
+  if([4,7].includes(idx)){
+    for(let i=0;i<3;i++){
+      const p=document.createElement('div');
+      p.className='ember-particle';
+      p.style.cssText=`left:${Math.random()*100}%;bottom:0;
+        animation-duration:${3+Math.random()*4}s;
+        animation-delay:${Math.random()*2}s;
+        --drift:${(Math.random()-0.5)*80}px;
+        opacity:${0.4+Math.random()*0.6};
+        background:hsl(${10+Math.random()*30},90%,${50+Math.random()*20}%);`;
+      scene.appendChild(p);
+      setTimeout(()=>p.remove(),(7000));
+    }
+  }
+}
+setInterval(spawnEmbers,500);
+
+const hint=document.getElementById('fullscreen-hint');
+setTimeout(()=>{hint.style.opacity='0';setTimeout(()=>hint.remove(),1000);},4000);
+
+goTo(0);
+setTimeout(()=>{playing=true;btnPlay.innerHTML='<i class="fa fa-pause"></i>';resetAuto();},3000);
+</script>
+</body>
+</html>
